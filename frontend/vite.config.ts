@@ -10,8 +10,8 @@ import VueRouter from 'unplugin-vue-router/vite'
 export default defineConfig({
   plugins: [
     VueRouter({
-      routesFolder: 'src/views',
-      extensions: ['vue'],
+      routesFolder: 'src/pages',
+      extensions: ['.vue'],
       dts: './typed-router.d.ts',
     }),
     vue(),
