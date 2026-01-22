@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { ComplianceController } from "../controllers/compliance.controller.ts";
-// import { authenticateUser } from "../middleware/auth.ts";
+import { authenticateUser } from "../middleware/auth.ts";
 
 const router = Router();
 const controller = new ComplianceController();
 
 // Protected routes - require authentication
-// router.use(authenticateUser);
+router.use(authenticateUser);
 
 // Get compliance by brand and area
 router.get("/brand-area", controller.getComplianceByBrandAndArea);
