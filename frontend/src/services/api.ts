@@ -38,8 +38,24 @@ api.interceptors.response.use(
 
 export const complianceApi = {
   // Get compliance by brand and area
-  getByBrandAndArea: async () => {
-    const response = await api.get<ApiResponse<ComplianceData[]>>('/compliance/brand-area')
+  getByBrandAndArea: async (params?: { areaId?: string; startDate?: string; endDate?: string }) => {
+    const queryParams = new URLSearchParams()
+
+    if (params?.areaId && params.areaId !== 'all') {
+      queryParams.append('areaId', params.areaId)
+    }
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate)
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate)
+    }
+
+    const queryString = queryParams.toString()
+    const url = `/compliance/brand-area${queryString ? `?${queryString}` : ''}`
+
+    const response = await api.get<ApiResponse<ComplianceData[]>>(url)
+    console.log('Compliance Data Response:', response.data)
     return response.data
   },
 

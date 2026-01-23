@@ -1,22 +1,62 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { FilterX } from 'lucide-vue-next'
 import Card from '@/components/ui/card/Card.vue'
 import type { ComplianceData } from '@/types'
 
 interface Props {
   data: ComplianceData[]
+  areas: Array<{ areaId: number; areaName: string }>
   title?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: 'Compliance Rate by Brand and Area',
+  areas: () => [],
 })
+
+const emit = defineEmits<{
+  filterChange: [filters: { areaId: string; startDate: string; endDate: string }]
+}>()
+
+// ⚡ FILTERS
+const selectedAreaId = ref('all')
+const startDate = ref('')
+const endDate = ref('')
+
+const applyFilters = () => {
+  emit('filterChange', {
+    areaId: selectedAreaId.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+  })
+}
+
+const resetFilters = () => {
+  selectedAreaId.value = 'all'
+  startDate.value = ''
+  endDate.value = ''
+  applyFilters()
+}
 
 // Group by area
 const chartData = computed(() => {
   const areaMap = new Map<
     string,
-    { area: string; brands: { name: string; value: number; color: string }[] }
+    {
+      area: string
+      brands: Array<{ name: string; value: number; color: string }>
+    }
   >()
 
   props.data.forEach((item) => {
@@ -41,8 +81,49 @@ const maxValue = 100 // Compliance rate max is 100%
 
 <template>
   <Card class="p-6">
-    <h3 class="text-lg font-semibold mb-6">{{ title }}</h3>
+    <!-- Header with Title and Filters -->
+    <div class="space-y-4 mb-6">
+      <h3 class="text-lg font-semibold">{{ title }}</h3>
 
+      <!-- Filters Row -->
+      <div class="flex flex-wrap items-end gap-4">
+        <!-- Area Filter -->
+        <div class="space-y-2">
+          <Label class="text-sm font-medium">Area</Label>
+          <Select v-model="selectedAreaId" @update:model-value="applyFilters">
+            <SelectTrigger class="w-45">
+              <SelectValue placeholder="All Areas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Areas</SelectItem>
+              <SelectItem v-for="area in areas" :key="area.areaId" :value="String(area.areaId)">
+                {{ area.areaName }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <!-- Start Date -->
+        <div class="space-y-2">
+          <Label class="text-sm font-medium">Start Date</Label>
+          <Input v-model="startDate" type="date" class="w-35" @change="applyFilters" />
+        </div>
+
+        <!-- End Date -->
+        <div class="space-y-2">
+          <Label class="text-sm font-medium">End Date</Label>
+          <Input v-model="endDate" type="date" class="w-35" @change="applyFilters" />
+        </div>
+
+        <!-- Reset Button -->
+        <Button variant="outline" size="default" @click="resetFilters">
+          <FilterX class="w-4 h-4 mr-2" />
+          Reset
+        </Button>
+      </div>
+    </div>
+
+    <!-- ⚡ HORIZONTAL CHART -->
     <div class="space-y-8">
       <!-- Each Area -->
       <div v-for="item in chartData" :key="item.area" class="space-y-3">

@@ -11,17 +11,21 @@ export const useComplianceStore = defineStore('compliance', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  const filters = ref({
+    areaId: 'all',
+    startDate: '',
+    endDate: '',
+  })
+
   // Fetch compliance by brand and area
-  const fetchComplianceData = async () => {
+  const fetchComplianceData = async (filterParams = filters.value) => {
+    loading.value = true
+    error.value = null
     try {
-      loading.value = true
-      error.value = null
-      const response = await complianceApi.getByBrandAndArea()
-      if (response.success) {
-        complianceData.value = response.data
-      }
-    } catch (err: unknown) {
-      error.value = (err as Error).message || 'Failed to fetch compliance data'
+      const response = await complianceApi.getByBrandAndArea(filterParams)
+      complianceData.value = response.data
+    } catch (err) {
+      error.value = 'Failed to fetch compliance data'
       console.error('Error fetching compliance data:', err)
     } finally {
       loading.value = false

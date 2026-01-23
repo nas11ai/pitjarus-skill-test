@@ -51,6 +51,10 @@ const brandWithHighestCompliance = computed(() => {
 
   return `${highest.brandName} (${Number(highest.complianceRate).toFixed(2)}%)`
 })
+
+const handleFilterChange = async (filters: any) => {
+  await complianceStore.fetchComplianceData(filters)
+}
 </script>
 
 <template>
@@ -145,7 +149,9 @@ const brandWithHighestCompliance = computed(() => {
         <!-- Main Chart -->
         <ComplianceChart
           :data="complianceStore.complianceData"
+          :areas="complianceStore.areas"
           title="Compliance Rate by Brand and Area"
+          @filter-change="handleFilterChange"
         />
 
         <!-- Brand Performance -->
@@ -166,7 +172,6 @@ const brandWithHighestCompliance = computed(() => {
                   <span class="font-medium">{{ brand.brandName }}</span>
                 </div>
                 <div class="text-right">
-                  <!-- ⬇️ FIX INI -->
                   <div class="font-bold">{{ Number(brand.complianceRate).toFixed(2) }}%</div>
                   <div class="text-xs text-muted-foreground">compliance rate</div>
                 </div>
@@ -190,7 +195,6 @@ const brandWithHighestCompliance = computed(() => {
                   <span class="font-medium">{{ area.areaName }}</span>
                 </div>
                 <div class="text-right">
-                  <!-- ⬇️ FIX INI -->
                   <div class="font-bold">{{ Number(area.complianceRate).toFixed(2) }}%</div>
                   <div class="text-xs text-muted-foreground">compliance rate</div>
                 </div>
