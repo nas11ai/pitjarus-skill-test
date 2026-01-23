@@ -1,16 +1,25 @@
-import type { Request, Response } from 'express';
-import { db } from '../db/index.ts';
-import { reportProduct, product, productBrand, store, storeArea } from '../db/schema.ts';
-import { eq, sql } from 'drizzle-orm';
+import type { Request, Response } from "express";
+import { db } from "../db/index.ts";
+import {
+  reportProduct,
+  product,
+  productBrand,
+  store,
+  storeArea,
+} from "../db/schema.ts";
+import { eq, sql } from "drizzle-orm";
 
 export class ComplianceController {
   /**
    * Get compliance rate per brand per area
    * Formula: SUM(compliance) / Total ROW * 100
    */
-  async getComplianceByBrandAndArea(_: Request, res: Response) {
+  async getComplianceByBrandAndArea(req: Request, res: Response) {
     try {
-      const result = await db
+      const { areaId, startDate, endDate } = req.query;
+
+      // Base query
+      let query = db
         .select({
           brandName: productBrand.brandName,
           areaName: storeArea.areaName,
@@ -23,6 +32,21 @@ export class ComplianceController {
         .innerJoin(productBrand, eq(product.brandId, productBrand.brandId))
         .innerJoin(store, eq(reportProduct.storeId, store.storeId))
         .innerJoin(storeArea, eq(store.areaId, storeArea.areaId))
+        .$dynamic();
+
+      // FILTER BY AREA
+      if (areaId && areaId !== "all") {
+        query = query.where(eq(storeArea.areaId, Number(areaId)));
+      }
+
+      // FILTER BY DATE RANGE
+      if (startDate && endDate) {
+        query = query.where(
+          sql`${reportProduct.tanggal} BETWEEN ${startDate} AND ${endDate}`,
+        );
+      }
+
+      const result = await query
         .groupBy(productBrand.brandName, storeArea.areaName)
         .orderBy(productBrand.brandName, storeArea.areaName);
 
@@ -31,10 +55,10 @@ export class ComplianceController {
         data: result,
       });
     } catch (error) {
-      console.error('Error fetching compliance data:', error);
+      console.error("Error fetching compliance data:", error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch compliance data',
+        error: "Failed to fetch compliance data",
       });
     }
   }
@@ -49,7 +73,7 @@ export class ComplianceController {
       if (!startDate || !endDate) {
         return res.status(400).json({
           success: false,
-          error: 'Start date and end date are required',
+          error: "Start date and end date are required",
         });
       }
 
@@ -66,9 +90,13 @@ export class ComplianceController {
         .innerJoin(store, eq(reportProduct.storeId, store.storeId))
         .innerJoin(storeArea, eq(store.areaId, storeArea.areaId))
         .where(
-          sql`${reportProduct.tanggal} BETWEEN ${startDate} AND ${endDate}`
+          sql`${reportProduct.tanggal} BETWEEN ${startDate} AND ${endDate}`,
         )
-        .groupBy(reportProduct.tanggal, productBrand.brandName, storeArea.areaName)
+        .groupBy(
+          reportProduct.tanggal,
+          productBrand.brandName,
+          storeArea.areaName,
+        )
         .orderBy(reportProduct.tanggal, productBrand.brandName);
 
       return res.json({
@@ -76,10 +104,10 @@ export class ComplianceController {
         data: result,
       });
     } catch (error) {
-      console.error('Error fetching compliance data by date:', error);
+      console.error("Error fetching compliance data by date:", error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch compliance data',
+        error: "Failed to fetch compliance data",
       });
     }
   }
@@ -126,10 +154,10 @@ export class ComplianceController {
         },
       });
     } catch (error) {
-      console.error('Error fetching overall stats:', error);
+      console.error("Error fetching overall stats:", error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch statistics',
+        error: "Failed to fetch statistics",
       });
     }
   }
@@ -145,10 +173,10 @@ export class ComplianceController {
         data: brands,
       });
     } catch (error) {
-      console.error('Error fetching brands:', error);
+      console.error("Error fetching brands:", error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch brands',
+        error: "Failed to fetch brands",
       });
     }
   }
@@ -164,10 +192,10 @@ export class ComplianceController {
         data: areas,
       });
     } catch (error) {
-      console.error('Error fetching areas:', error);
+      console.error("Error fetching areas:", error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch areas',
+        error: "Failed to fetch areas",
       });
     }
   }
